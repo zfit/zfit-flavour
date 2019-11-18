@@ -1,5 +1,5 @@
 
-from zfit_flavour.cli import main
+from zfit_flavour import main
 
 
 def test_main():

@@ -1,27 +1,40 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import print_function
 
 import io
 import re
-from glob import glob
-from os.path import basename
-from os.path import dirname
-from os.path import join
-from os.path import splitext
-
+import os
+import glob
 from setuptools import find_packages
 from setuptools import setup
 
 
 def read(*names, **kwargs):
     with io.open(
-        join(dirname(__file__), *names),
+        os.path.join(os.path.dirname(__file__), *names),
         encoding=kwargs.get('encoding', 'utf8')
     ) as fh:
         return fh.read()
 
+
+here = os.path.abspath(os.path.dirname(__file__))
+
+with open(os.path.join(here, 'requirements.txt'), encoding='utf-8') as requirements_file:
+    requirements = requirements_file.read().splitlines()
+
+with open(os.path.join(here, 'requirements_dev.txt'), encoding='utf-8') as requirements_dev_file:
+    requirements_dev = requirements_dev_file.read().splitlines()
+
+# split the developer requirements into setup and test requirements
+if not requirements_dev.count("") == 1 or requirements_dev.index("") == 0:
+    raise SyntaxError("requirements_dev.txt has the wrong format: setup and test "
+                      "requirements have to be separated by one blank line.")
+requirements_dev_split = requirements_dev.index("")
+
+setup_requirements = ["pip>9",
+                      "setuptools_scm",
+                      "setuptools_scm_git_archive"]
+test_requirements = requirements_dev[requirements_dev_split + 1:]  # +1: skip empty line
 
 setup(
     name='zfit-flavour',
@@ -41,7 +54,7 @@ setup(
     url='https://github.com/zfit/zfit-flavour',
     packages=find_packages('src'),
     package_dir={'': 'src'},
-    py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
+    py_modules=[os.path.splitext(os.path.basename(path))[0] for path in glob.glob('zfit_flavour/*.py')],
     include_package_data=True,
     zip_safe=False,
     classifiers=[
@@ -73,23 +86,12 @@ setup(
         'Issue Tracker': 'https://github.com/zfit/zfit-flavour/issues',
     },
     keywords=[
-        # eg: 'keyword1', 'keyword2', 'keyword3',
+        'flavour', 'zfit', 'model fitting'
     ],
-    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*',
-    install_requires=[
-        # eg: 'aspectlib==1.1.1', 'six>=1.7',
-    ],
-    extras_require={
-        # eg:
-        #   'rst': ['docutils>=0.11'],
-        #   ':python_version=="2.6"': ['argparse'],
-    },
-    setup_requires=[
-        'setuptools_scm>=3.3.1',
-    ],
-    entry_points={
-        'console_scripts': [
-            'zfit-flavour = zfit_flavour.cli:main',
-        ]
-    },
+    python_requires='>=3.6',
+    install_requires=requirements,
+    setup_requires=setup_requirements,
+    test_suite='tests',
+    tests_require=test_requirements,
+
 )
